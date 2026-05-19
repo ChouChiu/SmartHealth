@@ -9,7 +9,11 @@ import SwiftUI
 
 struct ProfileView: View {
     @EnvironmentObject var historyStore: HistoryStore
+    @Environment(NotificationManager.self) private var notificationManager
+    @AppStorage("SmartHealth.debugMode") private var isDebugMode = false
     @State private var showEditSheet = false
+    @State private var versionTapCount = 0
+    @State private var tapResetTask: Task<Void, Never>?
 
     var body: some View {
         List {
@@ -46,16 +50,98 @@ struct ProfileView: View {
             // MARK: About
             Section("關於") {
                 LabeledContent("App 名稱", value: "SmartHealth")
-                LabeledContent("版本", value: "1.0.0")
+
+                HStack {
+                    Text("版本")
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    Text(isDebugMode ? "1.0.0 🛠" : "1.0.0")
+                        .foregroundStyle(isDebugMode ? .orange : .primary)
+                }
+                .contentShape(.rect)
+                .onTapGesture { onVersionTap() }
 
                 if let name = historyStore.userProfile?.displayName {
                     LabeledContent("使用者", value: name)
+                }
+            }
+
+            // MARK: Debug Tools
+            if isDebugMode {
+                Section {
+                    Button {
+                        notificationManager.notifyHeartRateHigh(bpm: 110)
+                    } label: {
+                        Label("測試心率過高通知 (110 BPM)", systemImage: "heart.fill")
+                    }
+                    .tint(.red)
+
+                    Button {
+                        notificationManager.notifyHeartRateLow(bpm: 45)
+                    } label: {
+                        Label("測試心率過低通知 (45 BPM)", systemImage: "heart.slash")
+                    }
+                    .tint(.blue)
+
+                    Button {
+                        notificationManager.notifyWeightHigh(weight: 85, bmi: 28)
+                    } label: {
+                        Label("測試體重提醒通知 (85kg / BMI 28)", systemImage: "scalemass.fill")
+                    }
+                    .tint(.orange)
+                } header: {
+                    Text("🛠 通知測試")
+                }
+
+                Section {
+                    Button {
+                        historyStore.generateSampleHeartRateData()
+                    } label: {
+                        Label("產生範例心率資料（14 筆）", systemImage: "waveform.path.ecg")
+                    }
+
+                    Button {
+                        historyStore.generateSampleScaleData()
+                    } label: {
+                        Label("產生範例體重資料（14 筆）", systemImage: "scalemass")
+                    }
+                } header: {
+                    Text("🛠 範例資料")
+                }
+
+                Section {
+                    Button(role: .destructive) {
+                        historyStore.clearAllData()
+                    } label: {
+                        Label("清除所有資料", systemImage: "trash")
+                    }
+                } header: {
+                    Text("🛠 資料操作")
                 }
             }
         }
         .navigationTitle("個人")
         .sheet(isPresented: $showEditSheet) {
             ProfileEditView(historyStore: historyStore)
+        }
+    }
+
+    // MARK: - Debug Tap
+
+    private func onVersionTap() {
+        tapResetTask?.cancel()
+        versionTapCount += 1
+
+        if versionTapCount >= 5 {
+            versionTapCount = 0
+            isDebugMode.toggle()
+            return
+        }
+
+        tapResetTask = Task {
+            try? await Task.sleep(for: .seconds(2))
+            guard !Task.isCancelled else { return }
+            versionTapCount = 0
         }
     }
 }

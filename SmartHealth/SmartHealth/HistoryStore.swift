@@ -94,6 +94,57 @@ final class HistoryStore: ObservableObject {
         }
     }
 
+    // MARK: - Debug Helpers
+
+    /// 產生 14 筆過去兩週的隨機心率範例資料
+    func generateSampleHeartRateData() {
+        let calendar = Calendar.current
+        let samples: [HeartRateRecord] = (0..<14).map { daysAgo in
+            let date = calendar.date(byAdding: .day, value: -daysAgo, to: Date()) ?? Date()
+            let avg = Int.random(in: 65...95)
+            return HeartRateRecord(
+                id: UUID(),
+                date: date,
+                averageHR: avg,
+                maxHR: avg + Int.random(in: 5...20),
+                minHR: avg - Int.random(in: 5...15)
+            )
+        }
+        heartRateRecords.append(contentsOf: samples)
+        saveHeartRate()
+    }
+
+    /// 產生 14 筆過去兩週的隨機體重範例資料
+    func generateSampleScaleData() {
+        let calendar = Calendar.current
+        let samples: [ScaleRecord] = (0..<14).map { daysAgo in
+            let date = calendar.date(byAdding: .day, value: -daysAgo, to: Date()) ?? Date()
+            let weight = Double.random(in: 65...85)
+            let bmi = Double.random(in: 22...30)
+            return ScaleRecord(
+                id: UUID(),
+                date: date,
+                weight: weight,
+                bmi: bmi,
+                bodyFat: Double.random(in: 18...35)
+            )
+        }
+        scaleRecords.append(contentsOf: samples)
+        saveScale()
+    }
+
+    /// 清除所有記錄與個人資料
+    func clearAllData() {
+        heartRateRecords = []
+        scaleRecords = []
+        userProfile = nil
+        healthThresholds = .default
+        UserDefaults.standard.removeObject(forKey: heartRateKey)
+        UserDefaults.standard.removeObject(forKey: scaleKey)
+        UserDefaults.standard.removeObject(forKey: profileKey)
+        UserDefaults.standard.removeObject(forKey: thresholdsKey)
+    }
+
     // MARK: - Persistence
 
     private func saveHeartRate() {
