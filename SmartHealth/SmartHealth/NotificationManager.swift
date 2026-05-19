@@ -7,6 +7,7 @@
 
 import UserNotifications
 import Observation
+import UIKit
 
 @Observable
 final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
@@ -21,32 +22,33 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
 
     /// 請求通知權限。若使用者之前已拒絕，則引導至系統設定。
     func requestPermission() {
-        UNUserNotificationCenter.current().getNotificationSettings { settings in
-            Task { @MainActor in
-                switch settings.authorizationStatus {
-                case .notDetermined:
-                    // 首次請求 — 會彈出系統對話框
-                    UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, _ in
-                        Task { @MainActor in
-                            self.isAuthorized = granted
-                        }
-                    }
-                case .denied:
-                    // 已拒絕 — 只能引導去設定，更新狀態顯示
-                    self.isAuthorized = false
-                case .authorized, .provisional, .ephemeral:
-                    self.isAuthorized = true
-                @unknown default:
-                    break
+        Task {
+            let settings = await UNUserNotificationCenter.current().notificationSettings()
+            switch settings.authorizationStatus {
+            case .notDetermined:
+                // 首次請求 — 會彈出系統對話框
+                do {
+                    let granted = try await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge])
+                    await MainActor.run { self.isAuthorized = granted }
+                } catch {
+                    await MainActor.run { self.isAuthorized = false }
                 }
+            case .denied:
+                // 已拒絕 — 只能引導去設定，更新狀態顯示
+                await MainActor.run { self.isAuthorized = false }
+            case .authorized, .provisional, .ephemeral:
+                await MainActor.run { self.isAuthorized = true }
+            @unknown default:
+                break
             }
         }
     }
 
     /// 更新授權狀態（供外部呼叫，例如從設定頁面返回後）
     func refreshAuthorizationStatus() {
-        UNUserNotificationCenter.current().getNotificationSettings { settings in
-            Task { @MainActor in
+        Task {
+            let settings = await UNUserNotificationCenter.current().notificationSettings()
+            await MainActor.run {
                 self.isAuthorized = (settings.authorizationStatus == .authorized
                     || settings.authorizationStatus == .provisional
                     || settings.authorizationStatus == .ephemeral)
