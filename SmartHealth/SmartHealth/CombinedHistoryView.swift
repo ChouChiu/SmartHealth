@@ -32,7 +32,6 @@ private struct MonthSummary: Identifiable {
 
 struct CombinedHistoryView: View {
     @EnvironmentObject var historyStore: HistoryStore
-    @Environment(\.isLandscape) private var isLandscape
     @State private var chartSelection: Int?
     @State private var detailMonth: MonthSummary?
 
@@ -46,10 +45,23 @@ struct CombinedHistoryView: View {
                 emptyState
             } else {
                 ScrollView {
-                    if isLandscape {
-                        landscapeContent
-                    } else {
-                        portraitContent
+                    VStack(spacing: 20) {
+                        summaryCards
+                            .padding(.horizontal, 20)
+                            .padding(.top, 20)
+
+                        if monthSummaries.contains(where: { $0.avgHR != nil }) {
+                            heartRateChart
+                                .padding(.horizontal, 20)
+                        }
+
+                        if monthSummaries.contains(where: { $0.avgWeight != nil }) {
+                            weightChart
+                                .padding(.horizontal, 20)
+                        }
+
+                        footerText
+                            .padding(.bottom, 32)
                     }
                 }
             }
@@ -63,59 +75,6 @@ struct CombinedHistoryView: View {
         }
         .sheet(item: $detailMonth) { month in
             monthDetailView(month)
-        }
-    }
-
-    // MARK: - Layout
-
-    private var portraitContent: some View {
-        VStack(spacing: 20) {
-            summaryCards
-                .padding(.horizontal, 20)
-                .padding(.top, 20)
-
-            if monthSummaries.contains(where: { $0.avgHR != nil }) {
-                heartRateChart
-                    .padding(.horizontal, 20)
-            }
-
-            if monthSummaries.contains(where: { $0.avgWeight != nil }) {
-                weightChart
-                    .padding(.horizontal, 20)
-            }
-
-            footerText
-                .padding(.bottom, 32)
-        }
-    }
-
-    private var landscapeContent: some View {
-        let hasHR = monthSummaries.contains(where: { $0.avgHR != nil })
-        let hasWT = monthSummaries.contains(where: { $0.avgWeight != nil })
-
-        return VStack(spacing: 20) {
-            summaryCards
-                .padding(.horizontal, 24)
-                .padding(.top, 20)
-
-            if hasHR && hasWT {
-                HStack(alignment: .top, spacing: 16) {
-                    heartRateChart
-                        .frame(maxWidth: .infinity)
-                    weightChart
-                        .frame(maxWidth: .infinity)
-                }
-                .padding(.horizontal, 20)
-            } else if hasHR {
-                heartRateChart
-                    .padding(.horizontal, 20)
-            } else if hasWT {
-                weightChart
-                    .padding(.horizontal, 20)
-            }
-
-            footerText
-                .padding(.bottom, 32)
         }
     }
 
@@ -203,7 +162,7 @@ struct CombinedHistoryView: View {
                 }
             }
             .chartXSelection(value: $chartSelection)
-            .frame(height: isLandscape ? 180 : 200)
+            .frame(height: 200)
 
             // Legend
             HStack(spacing: 16) {
@@ -280,7 +239,7 @@ struct CombinedHistoryView: View {
             }
             .chartXSelection(value: $chartSelection)
             .chartLegend(position: .bottom, spacing: 16)
-            .frame(height: isLandscape ? 200 : 240)
+            .frame(height: 240)
         }
         .padding(16)
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))

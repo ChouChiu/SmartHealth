@@ -14,7 +14,6 @@ struct MainView: View {
     @EnvironmentObject var historyStore: HistoryStore
     @Environment(LocationManager.self) var locationManager
     @Environment(WeatherManager.self) var weatherManager
-    @Environment(\.isLandscape) private var isLandscape
     @State private var showHistory = false
 
     var body: some View {
@@ -71,7 +70,7 @@ struct MainView: View {
             }
         }
         .padding(.horizontal)
-        .padding(.vertical, isLandscape ? 4 : 8)
+        .padding(.vertical, 8)
         .sheet(isPresented: $showHistory) {
             NavigationStack {
                 historyDestination
@@ -86,32 +85,13 @@ struct MainView: View {
     @ViewBuilder
     private var weatherView: some View {
         if let temp = weatherManager.temperature {
-            if isLandscape {
-                HStack(spacing: 8) {
-                    Image(systemName: weatherManager.symbolName)
-                        .symbolRenderingMode(.multicolor)
-                    Text("\(temp)")
-                    if let city = weatherManager.cityName {
-                        Text("·")
-                            .foregroundStyle(.quaternary)
-                        Text(city)
-                    }
-                    if let condition = weatherManager.condition {
-                        Text(condition)
-                            .foregroundStyle(.tertiary)
-                    }
-                }
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-            } else {
-                HStack(spacing: 4) {
-                    Image(systemName: weatherManager.symbolName)
-                        .symbolRenderingMode(.multicolor)
-                    Text("\(temp)")
-                }
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+            HStack(spacing: 4) {
+                Image(systemName: weatherManager.symbolName)
+                    .symbolRenderingMode(.multicolor)
+                Text("\(temp)")
             }
+            .font(.subheadline)
+            .foregroundStyle(.secondary)
         }
     }
 

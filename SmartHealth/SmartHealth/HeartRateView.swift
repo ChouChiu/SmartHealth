@@ -13,7 +13,6 @@ import iREdFramework
 struct HeartRateView: View {
     @StateObject private var ble = iREdBluetooth.shared
     @EnvironmentObject var historyStore: HistoryStore
-    @Environment(\.isLandscape) private var isLandscape
     @State private var sessionReadings: [Int] = []
 
     private var isPairing: Bool {
@@ -31,11 +30,56 @@ struct HeartRateView: View {
 
     var body: some View {
         ScrollView {
-            if isLandscape {
-                landscapeContent
-            } else {
-                portraitContent
+            VStack(spacing: 24) {
+                // Status pills
+                HStack(spacing: 12) {
+                    StatusPill(
+                        icon: "antenna.radiowaves.left.and.right",
+                        label: isPairing ? "配對中…" : (isPaired ? "已配對" : "未配對"),
+                        color: isPairing ? .orange : (isPaired ? .blue : .secondary)
+                    )
+                    StatusPill(
+                        icon: "wave.3.right",
+                        label: isConnected ? "已連線" : "未連線",
+                        color: isConnected ? .green : .red
+                    )
+                }
+                .padding(.top, 16)
+
+                // Measurement card
+                MeasureCard(
+                    value: heartRate != nil ? "\(heartRate!)" : "--",
+                    unit: "心率",
+                    subtitle: "BPM",
+                    accent: .heartRate
+                ) {
+                    if heartRate != nil {
+                        HStack(spacing: 6) {
+                            Image(systemName: "heart.fill")
+                                .foregroundStyle(.red)
+                                .symbolEffect(.pulse, options: .repeating)
+                            Text("正在測量")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        }
+                        .padding(.top, 8)
+                    }
+                }
+                .padding(.horizontal, 20)
+
+                // Control buttons
+                controlSection
+                    .padding(.horizontal, 20)
+
+                // Device info
+                DeviceInfoGroup(
+                    name: ble.iredDeviceData.heartRateData.data.peripheralName ?? "-",
+                    macAddress: ble.iredDeviceData.heartRateData.data.macAddress ?? "-",
+                    lastUpdated: ble.iredDeviceData.heartRateData.data.lastUpdatedTime.description
+                )
+                .padding(.horizontal, 20)
             }
+            .padding(.bottom, 32)
         }
         .navigationTitle("心率監測")
         .onChange(of: isConnected) { _, connected in
@@ -54,82 +98,6 @@ struct HeartRateView: View {
                 sessionReadings.append(hr)
             }
         }
-    }
-
-    // MARK: - Layout
-
-    private var portraitContent: some View {
-        VStack(spacing: 24) {
-            statusPillsRow
-                .padding(.top, 16)
-            measureCardView
-                .padding(.horizontal, 20)
-            controlSection
-                .padding(.horizontal, 20)
-            deviceInfoView
-                .padding(.horizontal, 20)
-        }
-        .padding(.bottom, 32)
-    }
-
-    private var landscapeContent: some View {
-        HStack(alignment: .top, spacing: 20) {
-            measureCardView
-                .frame(maxWidth: .infinity)
-
-            VStack(spacing: 20) {
-                statusPillsRow
-                controlSection
-                deviceInfoView
-            }
-            .frame(width: 320)
-        }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 16)
-    }
-
-    private var statusPillsRow: some View {
-        HStack(spacing: 12) {
-            StatusPill(
-                icon: "antenna.radiowaves.left.and.right",
-                label: isPairing ? "配對中…" : (isPaired ? "已配對" : "未配對"),
-                color: isPairing ? .orange : (isPaired ? .blue : .secondary)
-            )
-            StatusPill(
-                icon: "wave.3.right",
-                label: isConnected ? "已連線" : "未連線",
-                color: isConnected ? .green : .red
-            )
-        }
-    }
-
-    private var measureCardView: some View {
-        MeasureCard(
-            value: heartRate != nil ? "\(heartRate!)" : "--",
-            unit: "心率",
-            subtitle: "BPM",
-            accent: .heartRate
-        ) {
-            if heartRate != nil {
-                HStack(spacing: 6) {
-                    Image(systemName: "heart.fill")
-                        .foregroundStyle(.red)
-                        .symbolEffect(.pulse, options: .repeating)
-                    Text("正在測量")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-                .padding(.top, 8)
-            }
-        }
-    }
-
-    private var deviceInfoView: some View {
-        DeviceInfoGroup(
-            name: ble.iredDeviceData.heartRateData.data.peripheralName ?? "-",
-            macAddress: ble.iredDeviceData.heartRateData.data.macAddress ?? "-",
-            lastUpdated: ble.iredDeviceData.heartRateData.data.lastUpdatedTime.description
-        )
     }
 
     // MARK: - Controls

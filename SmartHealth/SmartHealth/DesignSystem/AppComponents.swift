@@ -36,7 +36,6 @@ struct MeasureCard<Extra: View>: View {
     let unit: String
     let subtitle: String?
     let accent: AppAccent
-    @Environment(\.isLandscape) private var isLandscape
     @ViewBuilder let extra: () -> Extra
 
     init(
@@ -88,7 +87,7 @@ struct MeasureCard<Extra: View>: View {
                     .strokeBorder(accent.color.opacity(0.15), lineWidth: 2)
             )
         }
-        .frame(height: isLandscape ? 180 : 220)
+        .frame(height: 220)
     }
 }
 

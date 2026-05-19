@@ -13,7 +13,6 @@ import iREdFramework
 struct ScaleView: View {
     @StateObject private var ble = iREdBluetooth.shared
     @EnvironmentObject var historyStore: HistoryStore
-    @Environment(\.isLandscape) private var isLandscape
     @State private var hasSavedCurrent = false
 
     private var isPairing: Bool {
@@ -34,11 +33,54 @@ struct ScaleView: View {
 
     var body: some View {
         ScrollView {
-            if isLandscape {
-                landscapeContent
-            } else {
-                portraitContent
+            VStack(spacing: 24) {
+                // Status pills
+                HStack(spacing: 12) {
+                    StatusPill(
+                        icon: "antenna.radiowaves.left.and.right",
+                        label: isPairing ? "配對中…" : (isPaired ? "已配對" : "未配對"),
+                        color: isPairing ? .orange : (isPaired ? .blue : .secondary)
+                    )
+                    StatusPill(
+                        icon: "wave.3.right",
+                        label: isConnected ? "已連線" : "未連線",
+                        color: isConnected ? .green : .red
+                    )
+                }
+                .padding(.top, 16)
+
+                // Measurement card
+                MeasureCard(
+                    value: weight != nil ? String(format: "%.1f", weight!) : "--.-",
+                    unit: "公斤",
+                    subtitle: nil,
+                    accent: .scale
+                ) {
+                    HStack(spacing: 6) {
+                        Circle()
+                            .fill(isStable ? .green : .orange)
+                            .frame(width: 8, height: 8)
+                        Text(isStable ? "已穩定" : "測量中…")
+                            .font(.subheadline)
+                            .foregroundStyle(isStable ? .green : .orange)
+                    }
+                    .padding(.top, 8)
+                }
+                .padding(.horizontal, 20)
+
+                // Control buttons
+                controlSection
+                    .padding(.horizontal, 20)
+
+                // Device info
+                DeviceInfoGroup(
+                    name: ble.iredDeviceData.scaleData.data.peripheralName ?? "-",
+                    macAddress: ble.iredDeviceData.scaleData.data.macAddress ?? "-",
+                    lastUpdated: ble.iredDeviceData.scaleData.data.lastUpdatedTime.description
+                )
+                .padding(.horizontal, 20)
             }
+            .padding(.bottom, 32)
         }
         .navigationTitle("體重監測")
         .onChange(of: isConnected) { _, connected in
@@ -56,80 +98,6 @@ struct ScaleView: View {
             historyStore.addScale(weight: w, bmi: bmi, bodyFat: bodyFat)
             hasSavedCurrent = true
         }
-    }
-
-    // MARK: - Layout
-
-    private var portraitContent: some View {
-        VStack(spacing: 24) {
-            statusPillsRow
-                .padding(.top, 16)
-            measureCardView
-                .padding(.horizontal, 20)
-            controlSection
-                .padding(.horizontal, 20)
-            deviceInfoView
-                .padding(.horizontal, 20)
-        }
-        .padding(.bottom, 32)
-    }
-
-    private var landscapeContent: some View {
-        HStack(alignment: .top, spacing: 20) {
-            measureCardView
-                .frame(maxWidth: .infinity)
-
-            VStack(spacing: 20) {
-                statusPillsRow
-                controlSection
-                deviceInfoView
-            }
-            .frame(width: 320)
-        }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 16)
-    }
-
-    private var statusPillsRow: some View {
-        HStack(spacing: 12) {
-            StatusPill(
-                icon: "antenna.radiowaves.left.and.right",
-                label: isPairing ? "配對中…" : (isPaired ? "已配對" : "未配對"),
-                color: isPairing ? .orange : (isPaired ? .blue : .secondary)
-            )
-            StatusPill(
-                icon: "wave.3.right",
-                label: isConnected ? "已連線" : "未連線",
-                color: isConnected ? .green : .red
-            )
-        }
-    }
-
-    private var measureCardView: some View {
-        MeasureCard(
-            value: weight != nil ? String(format: "%.1f", weight!) : "--.-",
-            unit: "公斤",
-            subtitle: nil,
-            accent: .scale
-        ) {
-            HStack(spacing: 6) {
-                Circle()
-                    .fill(isStable ? .green : .orange)
-                    .frame(width: 8, height: 8)
-                Text(isStable ? "已穩定" : "測量中…")
-                    .font(.subheadline)
-                    .foregroundStyle(isStable ? .green : .orange)
-            }
-            .padding(.top, 8)
-        }
-    }
-
-    private var deviceInfoView: some View {
-        DeviceInfoGroup(
-            name: ble.iredDeviceData.scaleData.data.peripheralName ?? "-",
-            macAddress: ble.iredDeviceData.scaleData.data.macAddress ?? "-",
-            lastUpdated: ble.iredDeviceData.scaleData.data.lastUpdatedTime.description
-        )
     }
 
     // MARK: - Controls
