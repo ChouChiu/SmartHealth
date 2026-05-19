@@ -1,0 +1,15 @@
+{
+  "originHash" : "a03890ea00c5a4b55b5d178b807b3564587a86a46307c950d0c9076eab333b56",
+  "pins" : [
+    {
+      "identity" : "iredframework",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/iredchapman/iREdFramework.git",
+      "state" : {
+        "revision" : "8da8e61d984954818c669798f4c82cfe9faaa09d",
+        "version" : "1.0.16"
+      }
+    }
+  ],
+  "version" : 3
+}

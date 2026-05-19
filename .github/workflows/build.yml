@@ -1,0 +1,61 @@
+name: Build iOS Apps
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build-smarthealth:
+    name: Build SmartHealth
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Cache SPM packages
+        uses: actions/cache@v5
+        with:
+          path: ~/Library/Caches/org.swift.swiftpm
+          key: ${{ runner.os }}-spm-${{ hashFiles('SmartHealth/SmartHealth.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}
+          restore-keys: ${{ runner.os }}-spm-
+
+      - name: Select Xcode
+        run: |
+          XCODE_PATH=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -1)
+          if [ -z "$XCODE_PATH" ]; then
+            XCODE_PATH=$(ls -d /Applications/Xcode_*.app 2>/dev/null | sort -V | tail -1)
+          fi
+          echo "Using Xcode: $XCODE_PATH"
+          sudo xcode-select -s "$XCODE_PATH/Contents/Developer"
+          xcodebuild -version
+
+      - name: Resolve packages
+        working-directory: SmartHealth
+        run: xcodebuild -resolvePackageDependencies -project SmartHealth.xcodeproj -scheme SmartHealth
+
+      - name: Build
+        working-directory: SmartHealth
+        run: |
+          xcodebuild build \
+            -project SmartHealth.xcodeproj \
+            -scheme SmartHealth \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            | xcpretty && exit ${PIPESTATUS[0]}
+
+      - name: Package IPA
+        run: |
+          APP_PATH=$(find SmartHealth/build -name "SmartHealth.app" -type d | head -1)
+          echo "Found app at: $APP_PATH"
+          mkdir -p Payload
+          cp -R "$APP_PATH" Payload/
+          zip -r SmartHealth.ipa Payload
+          rm -rf Payload
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v7
+        with:
+          name: SmartHealth
+          path: SmartHealth.ipa
+          archive: false
