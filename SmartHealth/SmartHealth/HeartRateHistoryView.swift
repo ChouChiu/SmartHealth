@@ -31,6 +31,7 @@ enum HeartRateMetric {
 struct HeartRateChart: View {
     let data: [HeartRateRecord]
     let metric: HeartRateMetric
+    var compact: Bool = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -90,15 +91,24 @@ struct HeartRateChart: View {
                         .foregroundStyle(.tertiary)
                 }
             }
-            .frame(height: 180)
+            .frame(height: compact ? 160 : 180)
         }
         .padding(16)
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
     }
 }
 
+extension HeartRateChart {
+    func chartFrame(compact: Bool) -> some View {
+        var copy = self
+        copy.compact = compact
+        return copy
+    }
+}
+
 struct HeartRateHistoryView: View {
     @EnvironmentObject var historyStore: HistoryStore
+    @Environment(\.isLandscape) private var isLandscape
 
     private var averageHR: Int {
         let records = historyStore.heartRateRecordsSorted
@@ -137,14 +147,26 @@ struct HeartRateHistoryView: View {
                         .padding(.horizontal, 20)
                         .padding(.top, 20)
 
-                        HeartRateChart(data: historyStore.heartRateRecordsSorted, metric: .average)
+                        if isLandscape {
+                            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
+                                HeartRateChart(data: historyStore.heartRateRecordsSorted, metric: .average)
+                                    .chartFrame(compact: true)
+                                HeartRateChart(data: historyStore.heartRateRecordsSorted, metric: .max)
+                                    .chartFrame(compact: true)
+                                HeartRateChart(data: historyStore.heartRateRecordsSorted, metric: .min)
+                                    .chartFrame(compact: true)
+                            }
                             .padding(.horizontal, 20)
+                        } else {
+                            HeartRateChart(data: historyStore.heartRateRecordsSorted, metric: .average)
+                                .padding(.horizontal, 20)
 
-                        HeartRateChart(data: historyStore.heartRateRecordsSorted, metric: .max)
-                            .padding(.horizontal, 20)
+                            HeartRateChart(data: historyStore.heartRateRecordsSorted, metric: .max)
+                                .padding(.horizontal, 20)
 
-                        HeartRateChart(data: historyStore.heartRateRecordsSorted, metric: .min)
-                            .padding(.horizontal, 20)
+                            HeartRateChart(data: historyStore.heartRateRecordsSorted, metric: .min)
+                                .padding(.horizontal, 20)
+                        }
 
                         Text("共 \(historyStore.heartRateRecordsSorted.count) 筆記錄")
                             .font(.footnote)

@@ -9,6 +9,7 @@ import SwiftUI
 
 struct ProfileView: View {
     @EnvironmentObject var historyStore: HistoryStore
+    @Environment(\.isLandscape) private var isLandscape
     @State private var showEditSheet = false
 
     var body: some View {
@@ -54,6 +55,7 @@ struct ProfileView: View {
             }
         }
         .navigationTitle("個人")
+        .frame(maxWidth: isLandscape ? 600 : nil)
         .sheet(isPresented: $showEditSheet) {
             ProfileEditView(historyStore: historyStore)
         }

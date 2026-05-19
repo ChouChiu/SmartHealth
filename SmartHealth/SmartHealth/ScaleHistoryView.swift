@@ -10,6 +10,7 @@ import Charts
 
 struct ScaleChart: View {
     let data: [ScaleRecord]
+    var compact: Bool = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -65,7 +66,7 @@ struct ScaleChart: View {
                 }
             }
             .chartLegend(position: .bottom, spacing: 16)
-            .frame(height: 240)
+            .frame(height: compact ? 200 : 240)
         }
         .padding(16)
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
@@ -74,6 +75,7 @@ struct ScaleChart: View {
 
 struct ScaleHistoryView: View {
     @EnvironmentObject var historyStore: HistoryStore
+    @Environment(\.isLandscape) private var isLandscape
 
     var body: some View {
         Group {
@@ -105,7 +107,7 @@ struct ScaleHistoryView: View {
                         .padding(.horizontal, 20)
                         .padding(.top, 20)
 
-                        ScaleChart(data: historyStore.scaleRecordsSorted)
+                        ScaleChart(data: historyStore.scaleRecordsSorted, compact: isLandscape)
                             .padding(.horizontal, 20)
 
                         Text("共 \(historyStore.scaleRecordsSorted.count) 筆記錄")

@@ -29,8 +29,10 @@ struct SmartHealthApp: App {
                     .onAppear {
                         appState.userProfile = historyStore.userProfile
                     }
+                    .adaptiveRoot()
             } else {
                 OnboardingView(historyStore: historyStore)
+                    .adaptiveRoot()
             }
         }
     }
