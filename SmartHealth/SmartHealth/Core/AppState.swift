@@ -17,12 +17,14 @@ final class AppState {
     enum Tab: Int, CaseIterable {
         case heartRate
         case scale
+        case history
         case profile
 
         var title: String {
             switch self {
             case .heartRate: return "心率"
             case .scale:      return "體重"
+            case .history:   return "歷史"
             case .profile:    return "個人"
             }
         }
@@ -31,6 +33,7 @@ final class AppState {
             switch self {
             case .heartRate: return "heart.fill"
             case .scale:      return "scalemass.fill"
+            case .history:   return "chart.line.uptrend.xyaxis"
             case .profile:    return "person.fill"
             }
         }

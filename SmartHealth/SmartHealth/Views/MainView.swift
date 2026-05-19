@@ -14,8 +14,6 @@ struct MainView: View {
     @EnvironmentObject var historyStore: HistoryStore
     @Environment(LocationManager.self) var locationManager
     @Environment(WeatherManager.self) var weatherManager
-    @State private var showHistory = false
-
     var body: some View {
         VStack(spacing: 0) {
             headerView
@@ -37,6 +35,15 @@ struct MainView: View {
                     Label(AppState.Tab.scale.title, systemImage: AppState.Tab.scale.icon)
                 }
                 .tag(AppState.Tab.scale)
+
+                NavigationStack {
+                    CombinedHistoryView()
+                        .navigationBarTitleDisplayMode(.inline)
+                }
+                .tabItem {
+                    Label(AppState.Tab.history.title, systemImage: AppState.Tab.history.icon)
+                }
+                .tag(AppState.Tab.history)
 
                 NavigationStack {
                     ProfileView()
@@ -63,7 +70,7 @@ struct MainView: View {
             }
             Spacer()
             Button {
-                showHistory = true
+                appState.selectedTab = .history
             } label: {
                 Image(systemName: "chart.line.uptrend.xyaxis")
                     .font(.title3)
@@ -71,15 +78,6 @@ struct MainView: View {
         }
         .padding(.horizontal)
         .padding(.vertical, 8)
-        .sheet(isPresented: $showHistory) {
-            NavigationStack {
-                historyDestination
-            }
-        }
-    }
-
-    private var historyDestination: some View {
-        CombinedHistoryView()
     }
 
     @ViewBuilder
