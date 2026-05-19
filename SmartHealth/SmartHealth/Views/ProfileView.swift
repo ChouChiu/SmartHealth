@@ -14,6 +14,7 @@ struct ProfileView: View {
     @State private var showEditSheet = false
     @State private var versionTapCount = 0
     @State private var tapResetTask: Task<Void, Never>?
+    @State private var notificationSentMessage: String?
 
     var body: some View {
         List {
@@ -89,28 +90,64 @@ struct ProfileView: View {
                         } label: {
                             Label("重新請求通知權限", systemImage: "bell.badge")
                         }
+
+                        Button {
+                            notificationManager.openSystemSettings()
+                        } label: {
+                            Label("打開系統設定", systemImage: "gear")
+                        }
                     }
                 } header: {
                     Text("🛠 通知狀態")
+                } footer: {
+                    if !notificationManager.isAuthorized {
+                        Text("⚠️ 通知權限已被拒絕。請點擊「打開系統設定」→ 通知 → 允許通知，然後返回 App。")
+                    }
                 }
 
                 Section {
+                    if let msg = notificationSentMessage {
+                        HStack {
+                            Image(systemName: "info.circle.fill")
+                                .foregroundStyle(.green)
+                            Text(msg)
+                                .font(.subheadline)
+                                .foregroundStyle(.green)
+                        }
+                    }
+
+                    if let err = notificationManager.lastError {
+                        HStack {
+                            Image(systemName: "xmark.circle.fill")
+                                .foregroundStyle(.red)
+                            Text("錯誤：\(err)")
+                                .font(.subheadline)
+                                .foregroundStyle(.red)
+                        }
+                    }
+
                     Button {
+                        notificationManager.lastError = nil
                         notificationManager.notifyHeartRateHigh(bpm: 110)
+                        showSent("心率過高通知已排程 (110 BPM)")
                     } label: {
                         Label("測試心率過高通知 (110 BPM)", systemImage: "heart.fill")
                     }
                     .tint(.red)
 
                     Button {
+                        notificationManager.lastError = nil
                         notificationManager.notifyHeartRateLow(bpm: 45)
+                        showSent("心率過低通知已排程 (45 BPM)")
                     } label: {
                         Label("測試心率過低通知 (45 BPM)", systemImage: "heart.slash")
                     }
                     .tint(.blue)
 
                     Button {
+                        notificationManager.lastError = nil
                         notificationManager.notifyWeightHigh(weight: 85, bmi: 28)
+                        showSent("體重提醒通知已排程 (85kg)")
                     } label: {
                         Label("測試體重提醒通知 (85kg / BMI 28)", systemImage: "scalemass.fill")
                     }
@@ -118,8 +155,11 @@ struct ProfileView: View {
                 } header: {
                     Text("🛠 通知測試")
                 } footer: {
-                    if !notificationManager.isAuthorized {
-                        Text("⚠️ 尚未取得通知權限，測試通知將無法顯示。請先到 iOS 設定 > SmartHealth > 通知 中開啟，或點擊上方按鈕重新請求。")
+                    VStack(alignment: .leading, spacing: 4) {
+                        if !notificationManager.isAuthorized {
+                            Text("⚠️ 尚未取得通知權限，測試通知將無法顯示。")
+                        }
+                        Text("點擊後請立刻回到桌面或下拉通知中心查看。前景測試會在 0.5 秒後彈出橫幅。")
                     }
                 }
 
@@ -153,6 +193,20 @@ struct ProfileView: View {
         .navigationTitle("個人")
         .sheet(isPresented: $showEditSheet) {
             ProfileEditView(historyStore: historyStore)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
+            notificationManager.refreshAuthorizationStatus()
+        }
+    }
+
+    // MARK: - Debug Helpers
+
+    private func showSent(_ message: String) {
+        notificationSentMessage = message
+        Task {
+            try? await Task.sleep(for: .seconds(4))
+            guard !Task.isCancelled else { return }
+            notificationSentMessage = nil
         }
     }
 

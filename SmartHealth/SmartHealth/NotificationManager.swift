@@ -9,17 +9,55 @@ import UserNotifications
 import Observation
 
 @Observable
-final class NotificationManager {
+final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
     var isAuthorized = false
+
+    override init() {
+        super.init()
+        UNUserNotificationCenter.current().delegate = self
+    }
 
     // MARK: - Permission
 
+    /// 請求通知權限。若使用者之前已拒絕，則引導至系統設定。
     func requestPermission() {
-        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, _ in
+        UNUserNotificationCenter.current().getNotificationSettings { settings in
             Task { @MainActor in
-                self.isAuthorized = granted
+                switch settings.authorizationStatus {
+                case .notDetermined:
+                    // 首次請求 — 會彈出系統對話框
+                    UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, _ in
+                        Task { @MainActor in
+                            self.isAuthorized = granted
+                        }
+                    }
+                case .denied:
+                    // 已拒絕 — 只能引導去設定，更新狀態顯示
+                    self.isAuthorized = false
+                case .authorized, .provisional, .ephemeral:
+                    self.isAuthorized = true
+                @unknown default:
+                    break
+                }
             }
         }
+    }
+
+    /// 更新授權狀態（供外部呼叫，例如從設定頁面返回後）
+    func refreshAuthorizationStatus() {
+        UNUserNotificationCenter.current().getNotificationSettings { settings in
+            Task { @MainActor in
+                self.isAuthorized = (settings.authorizationStatus == .authorized
+                    || settings.authorizationStatus == .provisional
+                    || settings.authorizationStatus == .ephemeral)
+            }
+        }
+    }
+
+    /// 打開 iOS 系統設定 → SmartHealth → 通知
+    func openSystemSettings() {
+        guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
+        UIApplication.shared.open(url)
     }
 
     // MARK: - Send
@@ -54,6 +92,17 @@ final class NotificationManager {
         )
     }
 
+    // MARK: - UNUserNotificationCenterDelegate
+
+    /// 讓通知在 App 前景時也能彈出橫幅（否則只會靜默存入通知中心）
+    func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        willPresent notification: UNNotification,
+        withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
+    ) {
+        completionHandler([.banner, .sound, .badge])
+    }
+
     // MARK: - Private
 
     private func send(title: String, body: String, category: String) {
@@ -63,14 +112,25 @@ final class NotificationManager {
         content.sound = .default
         content.categoryIdentifier = category
 
+        // 用極短延遲 trigger 取代 nil，確保立即發送行為一致
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 0.5, repeats: false)
         let request = UNNotificationRequest(
             identifier: "\(category)-\(Date().timeIntervalSince1970)",
             content: content,
-            trigger: nil  // 立即發送
+            trigger: trigger
         )
 
-        UNUserNotificationCenter.current().add(request)
+        UNUserNotificationCenter.current().add(request) { error in
+            if let error {
+                Task { @MainActor in
+                    self.lastError = error.localizedDescription
+                }
+            }
+        }
     }
+
+    /// 最後一次發送通知的錯誤訊息（nil 表示成功），供除錯面板顯示
+    var lastError: String?
 
     private func exerciseSuggestion(forBMI bmi: Double) -> String {
         switch bmi {
