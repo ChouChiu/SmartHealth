@@ -145,6 +145,9 @@ struct ProfileEditView: View {
                             .foregroundStyle(.tertiary)
                     }
                     HStack {
+                        Text("出生年份")
+                            .foregroundStyle(.secondary)
+                        Spacer()
                         Picker(selection: $birthYear) {
                             let currentYear = Calendar.current.component(.year, from: Date())
                             ForEach((currentYear - 100)...currentYear, id: \.self) { year in
@@ -152,7 +155,6 @@ struct ProfileEditView: View {
                             }
                         } label: {
                             Text("出生年份")
-                                .foregroundStyle(.secondary)
                         }
                         .pickerStyle(.wheel)
                     }

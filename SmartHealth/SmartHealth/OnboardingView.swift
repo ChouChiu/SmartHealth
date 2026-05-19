@@ -131,6 +131,8 @@ struct OnboardingView: View {
             }
 
             VStack(alignment: .leading, spacing: 8) {
+                Text("出生年份")
+                    .font(.headline)
                 Picker(selection: $birthYear) {
                     let currentYear = Calendar.current.component(.year, from: Date())
                     ForEach((currentYear - 100)...currentYear, id: \.self) { year in
@@ -138,7 +140,6 @@ struct OnboardingView: View {
                     }
                 } label: {
                     Text("出生年份")
-                        .foregroundStyle(.secondary)
                 }
                 .pickerStyle(.wheel)
             }
