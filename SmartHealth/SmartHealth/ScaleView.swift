@@ -13,6 +13,7 @@ import iREdFramework
 struct ScaleView: View {
     @StateObject private var ble = iREdBluetooth.shared
     @EnvironmentObject var historyStore: HistoryStore
+    @Environment(NotificationManager.self) private var notificationManager
     @State private var hasSavedCurrent = false
 
     private var isPairing: Bool {
@@ -97,6 +98,16 @@ struct ScaleView: View {
             let bodyFat = scale.data.toBodyFat(height: height, age: age, gender: genderStr)
             historyStore.addScale(weight: w, bmi: bmi, bodyFat: bodyFat)
             hasSavedCurrent = true
+            checkWeightThreshold(weight: w, bmi: bmi)
+        }
+    }
+
+    // MARK: - Health Alerts
+
+    private func checkWeightThreshold(weight: Double, bmi: Double) {
+        let thresholds = historyStore.healthThresholds
+        if bmi > thresholds.maxBMI || weight > thresholds.maxWeight {
+            notificationManager.notifyWeightHigh(weight: weight, bmi: bmi)
         }
     }
 

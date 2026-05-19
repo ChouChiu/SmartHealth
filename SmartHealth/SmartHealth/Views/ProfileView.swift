@@ -71,14 +71,23 @@ struct ProfileEditView: View {
     @State private var heightText: String
     @State private var birthYear: Int
     @State private var showYearPicker = false
+    @State private var maxHeartRateText: String
+    @State private var minHeartRateText: String
+    @State private var maxBMIText: String
+    @State private var maxWeightText: String
 
     init(historyStore: HistoryStore) {
         self.historyStore = historyStore
         let profile = historyStore.userProfile
+        let thresholds = historyStore.healthThresholds
         _surname = State(initialValue: profile?.surname ?? "")
         _gender = State(initialValue: profile?.gender ?? .male)
         _heightText = State(initialValue: profile?.height.map(String.init) ?? "")
         _birthYear = State(initialValue: profile?.birthYear ?? Calendar.current.component(.year, from: Date()) - 30)
+        _maxHeartRateText = State(initialValue: String(thresholds.maxHeartRate))
+        _minHeartRateText = State(initialValue: String(thresholds.minHeartRate))
+        _maxBMIText = State(initialValue: String(format: "%.1f", thresholds.maxBMI))
+        _maxWeightText = State(initialValue: String(format: "%.1f", thresholds.maxWeight))
     }
 
     @FocusState private var isSurnameFocused: Bool
@@ -164,6 +173,63 @@ struct ProfileEditView: View {
                         }
                     }
                 }
+
+                // MARK: Health Thresholds
+                Section {
+                    HStack {
+                        Text("心率上限")
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        TextField("100", text: $maxHeartRateText)
+                            .keyboardType(.numberPad)
+                            .multilineTextAlignment(.trailing)
+                            .frame(width: 80)
+                        Text("BPM")
+                            .foregroundStyle(.tertiary)
+                    }
+                    HStack {
+                        Text("心率下限")
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        TextField("50", text: $minHeartRateText)
+                            .keyboardType(.numberPad)
+                            .multilineTextAlignment(.trailing)
+                            .frame(width: 80)
+                        Text("BPM")
+                            .foregroundStyle(.tertiary)
+                    }
+                } header: {
+                    Text("健康提醒 · 心率")
+                } footer: {
+                    Text("心跳太快或太慢時，會溫馨提醒您休息。")
+                }
+
+                Section {
+                    HStack {
+                        Text("BMI 上限")
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        TextField("25.0", text: $maxBMIText)
+                            .keyboardType(.decimalPad)
+                            .multilineTextAlignment(.trailing)
+                            .frame(width: 80)
+                    }
+                    HStack {
+                        Text("體重上限")
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        TextField("90.0", text: $maxWeightText)
+                            .keyboardType(.decimalPad)
+                            .multilineTextAlignment(.trailing)
+                            .frame(width: 80)
+                        Text("kg")
+                            .foregroundStyle(.tertiary)
+                    }
+                } header: {
+                    Text("健康提醒 · 體重")
+                } footer: {
+                    Text("體重偏高時，會推薦適合您的溫和活動。")
+                }
             }
             .navigationTitle("編輯個人資料")
             .navigationBarTitleDisplayMode(.inline)
@@ -183,6 +249,19 @@ struct ProfileEditView: View {
                             birthYear: birthYear
                         )
                         historyStore.saveUserProfile(profile)
+
+                        // Save thresholds
+                        let maxHR = Int(maxHeartRateText) ?? 90
+                        let minHR = Int(minHeartRateText) ?? 55
+                        let maxBMI = Double(maxBMIText) ?? 24.0
+                        let maxWeight = Double(maxWeightText) ?? 80.0
+                        let thresholds = HealthThresholds(
+                            maxHeartRate: max(maxHR, minHR + 5),
+                            minHeartRate: min(minHR, maxHR - 5),
+                            maxBMI: maxBMI,
+                            maxWeight: maxWeight
+                        )
+                        historyStore.saveThresholds(thresholds)
                         dismiss()
                     }
                     .disabled(surname.trimmingCharacters(in: .whitespaces).isEmpty)

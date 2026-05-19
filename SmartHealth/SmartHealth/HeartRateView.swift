@@ -13,7 +13,10 @@ import iREdFramework
 struct HeartRateView: View {
     @StateObject private var ble = iREdBluetooth.shared
     @EnvironmentObject var historyStore: HistoryStore
+    @Environment(NotificationManager.self) private var notificationManager
     @State private var sessionReadings: [Int] = []
+    @State private var didNotifyHigh = false
+    @State private var didNotifyLow = false
 
     private var isPairing: Bool {
         ble.iredDeviceData.heartRateData.state.isPairing
@@ -85,6 +88,8 @@ struct HeartRateView: View {
         .onChange(of: isConnected) { _, connected in
             if connected {
                 sessionReadings = []
+                didNotifyHigh = false
+                didNotifyLow = false
             } else if !sessionReadings.isEmpty {
                 let avg = sessionReadings.reduce(0, +) / sessionReadings.count
                 let max = sessionReadings.max() ?? 0
@@ -96,7 +101,22 @@ struct HeartRateView: View {
         .onChange(of: heartRate) { _, newValue in
             if isConnected, let hr = newValue {
                 sessionReadings.append(hr)
+                checkHeartRateThreshold(hr)
             }
+        }
+    }
+
+    // MARK: - Health Alerts
+
+    private func checkHeartRateThreshold(_ hr: Int) {
+        let thresholds = historyStore.healthThresholds
+        if hr > thresholds.maxHeartRate, !didNotifyHigh {
+            didNotifyHigh = true
+            notificationManager.notifyHeartRateHigh(bpm: hr)
+        }
+        if hr < thresholds.minHeartRate, !didNotifyLow {
+            didNotifyLow = true
+            notificationManager.notifyHeartRateLow(bpm: hr)
         }
     }
 

@@ -15,6 +15,7 @@ struct SmartHealthApp: App {
     @State private var historyStore = HistoryStore()
     @State private var locationManager = LocationManager()
     @State private var weatherManager = WeatherManager()
+    @State private var notificationManager = NotificationManager()
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
 
     var body: some Scene {
@@ -26,8 +27,10 @@ struct SmartHealthApp: App {
                     .environmentObject(historyStore)
                     .environment(locationManager)
                     .environment(weatherManager)
+                    .environment(notificationManager)
                     .onAppear {
                         appState.userProfile = historyStore.userProfile
+                        notificationManager.requestPermission()
                     }
             } else {
                 OnboardingView(historyStore: historyStore)

@@ -48,3 +48,19 @@ struct ScaleRecord: Codable, Identifiable, Equatable {
     let bmi: Double
     let bodyFat: Double
 }
+
+// MARK: - Health Thresholds
+
+struct HealthThresholds: Codable, Equatable {
+    var maxHeartRate: Int    // BPM 上限，預設 100
+    var minHeartRate: Int    // BPM 下限，預設 50
+    var maxBMI: Double       // BMI 上限，預設 25.0
+    var maxWeight: Double    // 體重上限 (kg)，預設 90
+
+    static let `default` = HealthThresholds(
+        maxHeartRate: 90,
+        minHeartRate: 55,
+        maxBMI: 24.0,
+        maxWeight: 80.0
+    )
+}

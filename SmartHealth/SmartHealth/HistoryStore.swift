@@ -13,10 +13,12 @@ final class HistoryStore: ObservableObject {
     @Published var heartRateRecords: [HeartRateRecord] = []
     @Published var scaleRecords: [ScaleRecord] = []
     @Published var userProfile: UserProfile?
+    @Published var healthThresholds: HealthThresholds = .default
 
     private let heartRateKey = "SmartHealth.heartRateRecords"
     private let scaleKey = "SmartHealth.scaleRecords"
     private let profileKey = "SmartHealth.userProfile"
+    private let thresholdsKey = "SmartHealth.thresholds"
 
     var greetingName: String {
         userProfile?.displayName ?? ""
@@ -77,6 +79,21 @@ final class HistoryStore: ObservableObject {
         saveScale()
     }
 
+    // MARK: - Thresholds
+
+    func saveThresholds(_ thresholds: HealthThresholds) {
+        healthThresholds = thresholds
+        guard let data = try? JSONEncoder().encode(thresholds) else { return }
+        UserDefaults.standard.set(data, forKey: thresholdsKey)
+    }
+
+    private func loadThresholds() {
+        if let data = UserDefaults.standard.data(forKey: thresholdsKey),
+           let thresholds = try? JSONDecoder().decode(HealthThresholds.self, from: data) {
+            healthThresholds = thresholds
+        }
+    }
+
     // MARK: - Persistence
 
     private func saveHeartRate() {
@@ -91,6 +108,7 @@ final class HistoryStore: ObservableObject {
 
     private func load() {
         loadUserProfile()
+        loadThresholds()
         if let data = UserDefaults.standard.data(forKey: heartRateKey),
            let records = try? JSONDecoder().decode([HeartRateRecord].self, from: data) {
             heartRateRecords = records
