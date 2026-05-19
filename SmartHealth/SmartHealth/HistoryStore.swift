@@ -96,11 +96,21 @@ final class HistoryStore: ObservableObject {
 
     // MARK: - Debug Helpers
 
-    /// 產生 14 筆過去兩週的隨機心率範例資料
+    /// 產生 24 筆過去半年（每週約一筆）的隨機心率範例資料，讓月度圖表有足夠資料點
     func generateSampleHeartRateData() {
         let calendar = Calendar.current
-        let samples: [HeartRateRecord] = (0..<14).map { daysAgo in
-            let date = calendar.date(byAdding: .day, value: -daysAgo, to: Date()) ?? Date()
+        let now = Date()
+        let samples: [HeartRateRecord] = (0..<24).map { weekOffset in
+            // 每週 1 筆，跨 24 週 ≈ 6 個月
+            var date = calendar.date(byAdding: .weekOfYear, value: -weekOffset, to: now) ?? now
+            // 加上 ±2 天的隨機偏移，避免全部擠在同一個星期幾
+            date = calendar.date(byAdding: .day, value: Int.random(in: -2...2), to: date) ?? date
+            date = calendar.date(
+                bySettingHour: Int.random(in: 6...22),
+                minute: Int.random(in: 0...59),
+                second: 0,
+                of: date
+            ) ?? date
             let avg = Int.random(in: 65...95)
             return HeartRateRecord(
                 id: UUID(),
@@ -114,18 +124,30 @@ final class HistoryStore: ObservableObject {
         saveHeartRate()
     }
 
-    /// 產生 14 筆過去兩週的隨機體重範例資料
+    /// 產生 24 筆過去半年（每週約一筆）的隨機體重範例資料，讓月度圖表有足夠資料點
     func generateSampleScaleData() {
         let calendar = Calendar.current
-        let samples: [ScaleRecord] = (0..<14).map { daysAgo in
-            let date = calendar.date(byAdding: .day, value: -daysAgo, to: Date()) ?? Date()
-            let weight = Double.random(in: 65...85)
-            let bmi = Double.random(in: 22...30)
+        let now = Date()
+        let samples: [ScaleRecord] = (0..<24).map { weekOffset in
+            // 每週 1 筆，跨 24 週 ≈ 6 個月
+            var date = calendar.date(byAdding: .weekOfYear, value: -weekOffset, to: now) ?? now
+            // 加上 ±2 天的隨機偏移 + 早晨時段（模擬每週量體重的習慣）
+            date = calendar.date(byAdding: .day, value: Int.random(in: -2...2), to: date) ?? date
+            date = calendar.date(
+                bySettingHour: Int.random(in: 7...10),
+                minute: Int.random(in: 0...59),
+                second: 0,
+                of: date
+            ) ?? date
+            // 模擬體重逐漸變化：從早期較高到近期較低（減重趨勢）
+            let baseWeight = 80.0 - Double(weekOffset) * 0.3 + Double.random(in: -2...2)
+            let weight = max(60, min(88, baseWeight))
+            let bmi = weight * 0.35 + Double.random(in: -1.5...1.5)
             return ScaleRecord(
                 id: UUID(),
                 date: date,
                 weight: weight,
-                bmi: bmi,
+                bmi: max(18, min(33, bmi)),
                 bodyFat: Double.random(in: 18...35)
             )
         }

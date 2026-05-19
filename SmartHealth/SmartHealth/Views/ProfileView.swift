@@ -127,13 +127,13 @@ struct ProfileView: View {
                     Button {
                         historyStore.generateSampleHeartRateData()
                     } label: {
-                        Label("產生範例心率資料（14 筆）", systemImage: "waveform.path.ecg")
+                        Label("產生範例心率資料（24 筆 / 半年）", systemImage: "waveform.path.ecg")
                     }
 
                     Button {
                         historyStore.generateSampleScaleData()
                     } label: {
-                        Label("產生範例體重資料（14 筆）", systemImage: "scalemass")
+                        Label("產生範例體重資料（24 筆 / 半年）", systemImage: "scalemass")
                     }
                 } header: {
                     Text("🛠 範例資料")
