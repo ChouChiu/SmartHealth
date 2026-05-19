@@ -2,7 +2,11 @@ name: Build iOS Apps
 
 on:
   push:
+    paths:
+      - 'SmartHealth/**'
   pull_request:
+    paths:
+      - 'SmartHealth/**'
   workflow_dispatch:
 
 jobs:
