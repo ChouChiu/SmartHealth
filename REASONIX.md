@@ -21,7 +21,6 @@
 | `…/Models.swift` | `UserProfile`, `HeartRateRecord`, `ScaleRecord` (Codable+Identifiable) |
 | `…/HistoryStore.swift` | ObservableObject CRUD → UserDefaults (`SmartHealth.*` keys) |
 | `…/SmartHealthApp.swift` | `@main` entry point, DI root |
-| `SportKitNoModify/` | **Separate experimental app — ignore unless asked** |
 | `.github/workflows/build.yml` | CI: builds `SmartHealth` scheme on push/PR |
 
 ## Commands
@@ -54,5 +53,4 @@ No test suite, lint, or format config in the repo.
 
 - `BLEManager` is a thin wrapper — views often access `iREdBluetooth.shared` directly via `@StateObject`
 - `WeatherManager` has an `#available(iOS 26.0, *)` code path alongside a `CLGeocoder` fallback — both must be kept in sync
-- `SportKitNoModify/` is a separate project; do not modify or reference it unless explicitly asked
 - No `Package.swift` — dependencies are resolved via Xcode SPM integration in the `.xcodeproj`
