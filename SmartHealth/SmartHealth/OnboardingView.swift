@@ -13,6 +13,7 @@ struct OnboardingView: View {
     @State private var gender: UserProfile.Gender = .male
     @State private var heightText = ""
     @State private var birthYear: Int = Calendar.current.component(.year, from: Date()) - 30
+    @State private var showYearPicker = false
     @FocusState private var isSurnameFocused: Bool
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
@@ -133,8 +134,38 @@ struct OnboardingView: View {
             VStack(alignment: .leading, spacing: 8) {
                 Text("出生年份")
                     .font(.headline)
+                Button {
+                    showYearPicker = true
+                } label: {
+                    HStack {
+                        Text(String(birthYear))
+                            .foregroundStyle(.primary)
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.tertiary)
+                    }
+                    .padding(12)
+                    .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
+                }
+                .buttonStyle(.plain)
+                .sheet(isPresented: $showYearPicker) {
+                    yearPickerSheet
+                }
+            }
+        }
+        .padding(32)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 24))
+    }
+
+    // MARK: - Year Picker Sheet
+
+    @ViewBuilder
+    private var yearPickerSheet: some View {
+        NavigationStack {
+            VStack {
+                let currentYear = Calendar.current.component(.year, from: Date())
                 Picker(selection: $birthYear) {
-                    let currentYear = Calendar.current.component(.year, from: Date())
                     ForEach((currentYear - 100)...currentYear, id: \.self) { year in
                         Text(String(year)).tag(year)
                     }
@@ -143,9 +174,16 @@ struct OnboardingView: View {
                 }
                 .pickerStyle(.wheel)
             }
+            .navigationTitle("選擇出生年份")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("完成") {
+                        showYearPicker = false
+                    }
+                }
+            }
         }
-        .padding(32)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 24))
     }
 
     // MARK: - Start Button

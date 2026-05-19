@@ -70,6 +70,7 @@ struct ProfileEditView: View {
     @State private var gender: UserProfile.Gender
     @State private var heightText: String
     @State private var birthYear: Int
+    @State private var showYearPicker = false
 
     init(historyStore: HistoryStore) {
         self.historyStore = historyStore
@@ -148,15 +149,19 @@ struct ProfileEditView: View {
                         Text("出生年份")
                             .foregroundStyle(.secondary)
                         Spacer()
-                        Picker(selection: $birthYear) {
-                            let currentYear = Calendar.current.component(.year, from: Date())
-                            ForEach((currentYear - 100)...currentYear, id: \.self) { year in
-                                Text(String(year)).tag(year)
-                            }
+                        Button {
+                            showYearPicker = true
                         } label: {
-                            Text("出生年份")
+                            Text(String(birthYear))
+                                .foregroundStyle(.primary)
+                            Image(systemName: "chevron.right")
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(.tertiary)
                         }
-                        .pickerStyle(.wheel)
+                        .buttonStyle(.plain)
+                        .sheet(isPresented: $showYearPicker) {
+                            yearPickerSheet
+                        }
                     }
                 }
             }
@@ -186,6 +191,34 @@ struct ProfileEditView: View {
             }
         }
         .presentationDetents([.large])
+    }
+
+    // MARK: - Year Picker Sheet
+
+    @ViewBuilder
+    private var yearPickerSheet: some View {
+        NavigationStack {
+            VStack {
+                let currentYear = Calendar.current.component(.year, from: Date())
+                Picker(selection: $birthYear) {
+                    ForEach((currentYear - 100)...currentYear, id: \.self) { year in
+                        Text(String(year)).tag(year)
+                    }
+                } label: {
+                    Text("出生年份")
+                }
+                .pickerStyle(.wheel)
+            }
+            .navigationTitle("選擇出生年份")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("完成") {
+                        showYearPicker = false
+                    }
+                }
+            }
+        }
     }
 }
 
