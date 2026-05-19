@@ -69,6 +69,32 @@ struct ProfileView: View {
             // MARK: Debug Tools
             if isDebugMode {
                 Section {
+                    HStack {
+                        Text("通知權限")
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        HStack(spacing: 4) {
+                            Circle()
+                                .fill(notificationManager.isAuthorized ? .green : .red)
+                                .frame(width: 8, height: 8)
+                            Text(notificationManager.isAuthorized ? "已授權" : "未授權")
+                                .font(.subheadline)
+                                .foregroundStyle(notificationManager.isAuthorized ? .green : .red)
+                        }
+                    }
+
+                    if !notificationManager.isAuthorized {
+                        Button {
+                            notificationManager.requestPermission()
+                        } label: {
+                            Label("重新請求通知權限", systemImage: "bell.badge")
+                        }
+                    }
+                } header: {
+                    Text("🛠 通知狀態")
+                }
+
+                Section {
                     Button {
                         notificationManager.notifyHeartRateHigh(bpm: 110)
                     } label: {
@@ -91,6 +117,10 @@ struct ProfileView: View {
                     .tint(.orange)
                 } header: {
                     Text("🛠 通知測試")
+                } footer: {
+                    if !notificationManager.isAuthorized {
+                        Text("⚠️ 尚未取得通知權限，測試通知將無法顯示。請先到 iOS 設定 > SmartHealth > 通知 中開啟，或點擊上方按鈕重新請求。")
+                    }
                 }
 
                 Section {

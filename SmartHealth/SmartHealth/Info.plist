@@ -2,8 +2,10 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>需要藍牙來連接您的心率帶和體重計，這樣才能記錄您的健康數據。</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>需要您的位置以顯示當地天氣資訊。</string>
+	<string>取得您的大約位置，是為了顯示您所在地區的天氣，讓您知道今天適不適合出門散步。</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>processing</string>
