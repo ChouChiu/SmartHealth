@@ -85,7 +85,6 @@ struct MainView: View {
         if let temp = weatherManager.temperature {
             HStack(spacing: 4) {
                 Image(systemName: weatherManager.symbolName)
-                    .symbolRenderingMode(.multicolor)
                 Text("\(temp)")
             }
             .font(.subheadline)
